@@ -1,0 +1,201 @@
+# Créé par demoraes.e, le 01/12/2021 en Python 3.7
+
+#Imports
+from random import *
+
+#Fonctions
+
+#Dictionnaire qui sert a la verification et a l'affichage
+def creerBaseDeChiffresEtBaseDeLettres ():
+    dictionnaireLettresEtChiffres = {' ':'espace à afficher au début de la carte','a':'0','b':'1','c':'2','d':'3','e':'4'}
+    return dictionnaireLettresEtChiffres
+
+#Creer une liste de chiffre pour verifier si les entrées utilisateur correspondent bien
+def creerListChiffres(intDimensionCarte):
+    listChiffres = []
+    for i in range(1,intDimensionCarte+1):
+        listChiffres.append(str(i))
+    return listChiffres
+
+#Compte le nombre de "Touché" et retourne vrai ou faux en fonction du résultat
+def victoireUtilisateur(listCarteTir):
+    intCasesTrouver = 0
+    for i in range (0,len(listCarteTir)):
+        for j in range (0, len(listCarteTir[i])):
+            if listCarteTir[i][j]:
+                intCasesTrouver += 1
+    boolVictoire = False
+    if intCasesTrouver == 5:
+        boolVictoire = True
+    return boolVictoire
+
+#Demande l'action du joueur et defini les regles
+def demanderActionJoueur():
+    strEntreeJoueur= str( input(
+'''
+(Rentrez la lettre puis le chiffre séparé d'un espace !
+Exemple : c 1)
+Ou voulez tirer sur la carte ?
+Attention, choisissez bien !
+>>> '''
+))
+    return strEntreeJoueur
+
+#Verifie si les coordonés correspondent bien aux regles defini en début de partie 
+def verifierCointOrdonnees (dictionnaireLettresEtChiffres,listChiffres):
+    boolVerification = False
+    while not boolVerification:
+        strEntreeJoueur = demanderActionJoueur()
+        listCointOrdonneesTir = strEntreeJoueur.split(" ") 
+        if (len(listCointOrdonneesTir) == 2 and listCointOrdonneesTir[0] in dictionnaireLettresEtChiffres.keys() and listCointOrdonneesTir[1] in listChiffres):
+            boolVerification = True
+    return listCointOrdonneesTir
+
+#Converti l'entrée utilisateur en int pour que l'on puisse tirer sur la carte
+def convertirStrDonneesActionJoueurEnIntCoordonees(dictionnaireLettresEtChiffres,listChiffres):
+    listCointOrdonneesTir =  verifierCointOrdonnees(dictionnaireLettresEtChiffres,listChiffres)
+    dictionnaireLettresEtChiffres = creerBaseDeChiffresEtBaseDeLettres ()
+    charAbscisses = listCointOrdonneesTir[0]
+    charOrdonees = listCointOrdonneesTir[1]
+    intAxeX = int(dictionnaireLettresEtChiffres[charAbscisses])
+    intAxeY = int(charOrdonees)-1
+    return intAxeX,intAxeY
+
+#Permet de creer des cartes vides remplies de False
+def creerCarteVide(intDimensionCarte):
+    listCarte = []
+    for taille_y in range(0,intDimensionCarte):
+        listNouvelleLigne = []
+        for taille_x in range(0,intDimensionCarte):
+            listNouvelleLigne.append(False)
+        listCarte.append(listNouvelleLigne)
+    return listCarte
+
+#Creer une carte sans Navire pour pouvoir en ajouter après
+def creerCarteNavires(intDimensionCarte):
+    listCarteNavires = creerCarteVide(intDimensionCarte)
+    return listCarteNavires
+
+#Choisi aleatoirement si le bateau va etre Horizontal ou non
+def estHorizontal():
+    return choice([True, False])
+
+
+def verifierSiUnBateauEstDejaPresent(boolEstHorizontal,listCarteNavires,intTailleNavire,intAbscisse,intOrdonne):
+    #Regarde pour la taille du navire si il y'en a deja un de present
+    if boolEstHorizontal: 
+        for i in range(0,intTailleNavire):
+            if listCarteNavires[intAbscisse + i][intOrdonne]:
+                return True
+    else:
+        for i in range(0,intTailleNavire):
+            if listCarteNavires[intAbscisse][intOrdonne + i]:
+                return True
+    return False
+
+#Place les navires aléatoirement et verifie si ils ne se croisent pas
+def ajouterNavireCarte(listCarteNavires, intDimensionCarte, intTailleNavire):
+    boolEstHorizontal = estHorizontal()
+    
+    #L'Abscisse et l'Ordonne sont defini en fonction de l'alignement du bateau 
+    if boolEstHorizontal:
+        intAbscisse = randint(0, intDimensionCarte-intTailleNavire)
+        intOrdonne = randint(0,intDimensionCarte-1)
+    else:
+        intAbscisse = randint(0, intDimensionCarte-1)
+        intOrdonne = randint(0,intDimensionCarte-intTailleNavire)
+
+    #Verifie si un bateau est deja present si oui il change les coordones du bateau
+    while verifierSiUnBateauEstDejaPresent(boolEstHorizontal,listCarteNavires,intTailleNavire,intAbscisse,intOrdonne):
+        intAbscisse = randint(0, intDimensionCarte-intTailleNavire)
+        intOrdonne = randint(0,intDimensionCarte-intTailleNavire)
+
+    #Place les navires
+    if boolEstHorizontal: 
+        for i in range(0,intTailleNavire):
+            listCarteNavires[intAbscisse + i][intOrdonne] = True
+    else:
+        for i in range(0,intTailleNavire):
+            listCarteNavires[intAbscisse][intOrdonne + i] = True
+
+    return listCarteNavires
+
+#Permet d'afficher n'importe quelle liste 
+def afficherListCarte(listCarte):
+    for element in range(0, len(listCarte)-1):
+        print(" ".join(listCarte[element]))
+    #Affiche le score
+    print(listCarte[element + 1])
+
+#Converti la liste des tirs en une liste que l'on va afficher a l'utilisateur
+def creerCarteAAfficher(listCarteTir,dictionnaireLettresEtChiffres,intScore) :
+    listCarteAAfficher = []
+
+    #recupere les clés du dictionnaire
+    keys = dictionnaireLettresEtChiffres.keys()
+    listCarteAAfficher.append(keys)
+    for i in range(len(listCarteTir)):
+        #La premiere ligne affiche les lettres qui serven de repére au joueur
+        listNouvelleLigne = [str(i+1)]
+        #Converti les differentes valeurs de la liste des Tirs en element affichable
+        for j in range(len(listCarteTir[i])):
+            if not listCarteTir[i][j]:
+                listNouvelleLigne.append(".")
+            elif listCarteTir[i][j]:
+                listNouvelleLigne.append("o")
+            else:
+                listNouvelleLigne.append("x")
+                intScore -= 10
+        listCarteAAfficher.append(listNouvelleLigne)
+    #Affiche le score en bas de la carte
+    print(f"Score: {intScore}")
+    listCarteAAfficher.append(f"Score: {intScore}")
+    return listCarteAAfficher
+
+#Compare la liste des Tirs et la liste des Navires pour voir si le joueur touche ou non
+def executerActionJoueur(listCarteTir,listCarteAvecNavire,intAxeX,intAxeY):
+    boolTirDuJoueur = listCarteAvecNavire[intAxeX][intAxeY]
+    if boolTirDuJoueur:
+        listCarteTir[intAxeY][intAxeX] = True
+    else:
+        listCarteTir[intAxeY][intAxeX] = None
+    return listCarteTir
+
+#Initie toutes les cartes & liste / Defini la taille de la carte et le score de depart / Affiche un petit scénario
+def initierJeu():
+    #Score & Dimension
+    intScore = 250
+    intDimensionCarte = 5
+    #Cartes & liste
+    dictionnaireLettresEtChiffres = creerBaseDeChiffresEtBaseDeLettres ()
+    listCarteSansNavire = creerCarteNavires(intDimensionCarte)
+    listCarteAvecNavire = ajouterNavireCarte(listCarteSansNavire, intDimensionCarte, 2)
+    listCarteAvecNavire = ajouterNavireCarte(listCarteAvecNavire, intDimensionCarte, 3)
+    listCarteTir = creerCarteVide(intDimensionCarte)
+    listCarteAAfficher = creerCarteAAfficher(listCarteTir,dictionnaireLettresEtChiffres,intScore)
+    listChiffres = creerListChiffres(intDimensionCarte)
+    #Scenario de depart
+    print(
+"""Bonjour Capitaine !
+Aujourd'hui notre mission est de détruire les bâteaux ennemis !
+Bonne chance !!
+"""
+)   
+    return listCarteAvecNavire,listCarteTir,listCarteAAfficher,dictionnaireLettresEtChiffres,intScore,listChiffres
+
+#Lance le jeu
+def executerJeu():
+    boolVictoire = False
+    listCarteAvecNavire,listCarteTir,listCarteAAfficher,dictionnaireLettresEtChiffres,intScore,listChiffres = initierJeu()
+    while not boolVictoire:
+        afficherListCarte(listCarteAAfficher)
+        intAxeX,intAxeY = convertirStrDonneesActionJoueurEnIntCoordonees(dictionnaireLettresEtChiffres,listChiffres)
+        listCarteTir = executerActionJoueur(listCarteTir,listCarteAvecNavire,intAxeX,intAxeY)
+        listCarteAAfficher = creerCarteAAfficher(listCarteTir,dictionnaireLettresEtChiffres,intScore)
+        if victoireUtilisateur(listCarteTir):
+            boolVictoire = True
+    afficherListCarte(listCarteAAfficher)
+    print("Bravo, capitaine, vous avez coulé tous les bateaux adversaires\nRentrez à la base à présent !")
+    return
+    
+executerJeu()
